@@ -1,4 +1,4 @@
-# OLT API Documentation
+# EXAMPLE USAGE OLT API Documentation
 
 Base URL: `http://localhost:3000`
 
@@ -7,43 +7,42 @@ Base URL: `http://localhost:3000`
 ## Device Management
 
 ### Create/Update Device
-```http
-POST http://localhost:3000/api/v1/devices
-Content-Type: application/json
-
-{
-  "id": "olt-001",
-  "name": "OLT KROTO",
-  "base_url": "http://192.168.1.100",
-  "port": 80,
-  "username": "admin",
-  "password": "admin"
-}
+```bash
+curl -X POST "http://localhost:3000/api/v1/devices" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "olt-001",
+    "name": "OLT KROTO",
+    "base_url": "http://192.168.1.100",
+    "port": 80,
+    "username": "admin",
+    "password": "admin"
+  }'
 ```
 
 ### List All Devices
-```http
-GET http://localhost:3000/api/v1/devices
+```bash
+curl "http://localhost:3000/api/v1/devices"
 ```
 
 ### Get Device Detail
-```http
-GET http://localhost:3000/api/v1/devices/:id
+```bash
+curl "http://localhost:3000/api/v1/devices/olt-1"
 ```
 
 ### Delete Device
-```http
-DELETE http://localhost:3000/api/v1/devices/:id
+```bash
+curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1"
 ```
 
 ### Delete All Devices
-```http
-DELETE http://localhost:3000/api/v1/devices
+```bash
+curl -X DELETE "http://localhost:3000/api/v1/devices"
 ```
 
 ### Check Device Status
-```http
-GET http://localhost:3000/api/v1/devices/:id/status
+```bash
+curl "http://localhost:3000/api/v1/devices/olt-1/status"
 ```
 
 ---
@@ -51,8 +50,8 @@ GET http://localhost:3000/api/v1/devices/:id/status
 ## PON Operations
 
 ### Get PON List
-```http
-GET http://localhost:3000/api/v1/devices/:id/pons
+```bash
+curl "http://localhost:3000/api/v1/devices/olt-1/pons"
 ```
 
 **Response:**
@@ -70,9 +69,12 @@ GET http://localhost:3000/api/v1/devices/:id/pons
 ## ONU Operations
 
 ### Get ONUs by PON
-```http
-GET http://localhost:3000/api/v1/devices/:id/pons/:pon_id/onus
-GET http://localhost:3000/api/v1/devices/:id/pons/:pon_id/onus?filter=online
+```bash
+# Get all ONUs on PON 1
+curl "http://localhost:3000/api/v1/devices/olt-1/pons/1/onus"
+
+# Get only online ONUs
+curl "http://localhost:3000/api/v1/devices/olt-1/pons/1/onus?filter=online"
 ```
 
 | Parameter | Description |
@@ -81,8 +83,8 @@ GET http://localhost:3000/api/v1/devices/:id/pons/:pon_id/onus?filter=online
 | `filter` | Optional: `online`, `offline` |
 
 ### Get ONU Detail
-```http
-GET http://localhost:3000/api/v1/devices/:id/onus/:onu_id
+```bash
+curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:1"
 ```
 
 | Parameter | Description |
@@ -109,30 +111,24 @@ GET http://localhost:3000/api/v1/devices/:id/onus/:onu_id
 ```
 
 ### Update ONU Name
-```http
-PUT http://localhost:3000/api/v1/devices/:id/onus/:onu_id
-Content-Type: application/json
-
-{
-  "name": "NAMA BARU"
-}
+```bash
+curl -X PUT "http://localhost:3000/api/v1/devices/olt-1/onus/1:1" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "NAMABARU"}'
 ```
 
 ### Reboot ONU
-```http
-POST http://localhost:3000/api/v1/devices/:id/onus/:onu_id/action
-Content-Type: application/json
-
-{
-  "action": "reboot"
-}
+```bash
+curl -X POST "http://localhost:3000/api/v1/devices/olt-1/onus/1:1/action" \
+  -H "Content-Type: application/json" \
+  -d '{"action": "reboot"}'
 ```
 
 **Note:** Nama ONU akan dipertahankan selama reboot.
 
 ### Delete ONU
-```http
-DELETE http://localhost:3000/api/v1/devices/:id/onus/:onu_id
+```bash
+curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1/onus/1:1"
 ```
 
 ---
@@ -140,8 +136,8 @@ DELETE http://localhost:3000/api/v1/devices/:id/onus/:onu_id
 ## System Operations
 
 ### Get System Info
-```http
-GET http://localhost:3000/api/v1/devices/:id/system
+```bash
+curl "http://localhost:3000/api/v1/devices/olt-1/system"
 ```
 
 **Response:**
@@ -159,21 +155,21 @@ GET http://localhost:3000/api/v1/devices/:id/system
 ```
 
 ### Save Configuration
-```http
-POST http://localhost:3000/api/v1/devices/:id/save-config
+```bash
+curl -X POST "http://localhost:3000/api/v1/devices/olt-1/save-config"
 ```
 
 ### Get ONU Logs
-```http
-GET http://localhost:3000/api/v1/devices/:id/logs?limit=100
+```bash
+curl "http://localhost:3000/api/v1/devices/olt-1/logs?limit=100"
 ```
 
 ---
 
 ## Health Check
 
-```http
-GET http://localhost:3000/health
+```bash
+curl "http://localhost:3000/health"
 ```
 
 **Response:**
