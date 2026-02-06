@@ -108,7 +108,7 @@ Error responses:
 
 ## Performance
 
-- Handles 4000+ concurrent ONU operations
+- Handles 400+ concurrent ONU operations
 - 200 worker goroutines for parallel scraping
 - Connection pooling (100 max idle connections per host)
 - Response caching with 60s TTL (configurable)
