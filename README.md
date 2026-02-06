@@ -17,7 +17,11 @@ HIOSO OLT management REST API with support for multiple devices.
 ### Linux/Mac
 
 ```bash
-cd olt-api
+# Clone repository
+git clone https://github.com/kroto69/HIOSOOO-RESTAPI.git
+cd HIOSOOO-RESTAPI
+
+# Install and Run
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ./olt-api
@@ -26,7 +30,8 @@ chmod +x scripts/install.sh
 ### Windows
 
 ```cmd
-cd olt-api
+git clone https://github.com/kroto69/HIOSOOO-RESTAPI.git
+cd HIOSOOO-RESTAPI
 scripts\install.bat
 olt-api.exe
 ```
