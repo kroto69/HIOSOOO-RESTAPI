@@ -13,7 +13,7 @@ curl -X POST "http://localhost:3000/api/v1/devices" \
   -d '{
     "id": "olt-001",
     "name": "OLT KROTO",
-    "base_url": "http://192.168.1.100",
+    "base_url": "http://192.168.96.100",
     "port": 80,
     "username": "admin",
     "password": "admin"
@@ -84,7 +84,7 @@ curl "http://localhost:3000/api/v1/devices/olt-1/pons/1/onus?filter=online"
 
 ### Get ONU Detail
 ```bash
-curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:1"
+curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:4"
 ```
 
 | Parameter | Description |
@@ -96,7 +96,7 @@ curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:1"
 {
   "data": {
     "onu_id": "0/1:4",
-    "name": "PELANGGAN",
+    "name": " PRARORO",
     "mac_address": "6C:D2:B3:D3:A8:B9",
     "status": "Up",
     "first_uptime": "2026-01-21 16:14:18",
@@ -112,14 +112,14 @@ curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:1"
 
 ### Update ONU Name
 ```bash
-curl -X PUT "http://localhost:3000/api/v1/devices/olt-1/onus/1:1" \
+curl -X PUT "http://localhost:3000/api/v1/devices/olt-1/onus/1:4" \
   -H "Content-Type: application/json" \
-  -d '{"name": "NAMABARU"}'
+  -d '{"name": "JOKOWOW"}'
 ```
 
 ### Reboot ONU
 ```bash
-curl -X POST "http://localhost:3000/api/v1/devices/olt-1/onus/1:1/action" \
+curl -X POST "http://localhost:3000/api/v1/devices/olt-1/onus/1:4/action" \
   -H "Content-Type: application/json" \
   -d '{"action": "reboot"}'
 ```
@@ -128,7 +128,7 @@ curl -X POST "http://localhost:3000/api/v1/devices/olt-1/onus/1:1/action" \
 
 ### Delete ONU
 ```bash
-curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1/onus/1:1"
+curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1/onus/1:4"
 ```
 
 ---
@@ -147,8 +147,8 @@ curl "http://localhost:3000/api/v1/devices/olt-1/system"
     "system_name": "EPON",
     "switch_type": "OLT",
     "software_version": "V2.3.1",
-    "mac_address": "78:5C:72:A2:B0:B4",
-    "ip_address": "10.17.0.7",
+    "mac_address": "A8:BC:78:AB:BC:CD",
+    "ip_address": "192.168.96.100",
     "uptime": "7 hours 28 minutes 11 seconds"
   }
 }
