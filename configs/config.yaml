@@ -1,0 +1,21 @@
+server:
+  port: 3000
+  host: 0.0.0.0
+  read_timeout: 30s
+  write_timeout: 30s
+
+database:
+  path: ./olt-api.db
+
+cache:
+  enabled: true
+  ttl: 60s
+
+scraper:
+  timeout: 60s
+  max_workers: 200
+  retry_attempts: 3
+
+logging:
+  level: info
+  file: ./logs/app.log
