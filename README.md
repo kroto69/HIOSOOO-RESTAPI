@@ -5,12 +5,22 @@ HIOSO OLT management REST API with support for multiple devices.
 ## Features
 
 - 🚀 High-performance Go backend with Gin framework
-- 📊 Multi-device support (4+ OLTs with 1000+ ONUs each)
+- 📊 Multi-device support 
 - 🔄 Concurrent scraping with worker pools
 - 💾 SQLite database (zero-config, single file)
 - 📦 Single binary deployment
 - 🔒 Basic authentication for OLT access
 - 📝 Response caching with configurable TTL
+
+
+## Methode kerjanya :
+
+This API operates using a simple three-step process:
+
+1.  **Scraping**: Automatically fetches live data directly from the HIOSO OLT web interface.
+2.  **Parsing**: Converts the raw data (HTML/JS) from the OLT into a clean, structured **JSON** format.
+3.  **API Wrapper**: Wraps OLT functions (Reboot, Update Name, etc.) into a standard **REST API** for easy integration with other applications.
+
 
 ## Quick Start
 
@@ -106,13 +116,6 @@ Error responses:
 }
 ```
 
-## Performance
-
-- Handles 400+ concurrent ONU operations
-- 200 worker goroutines for parallel scraping
-- Connection pooling (100 max idle connections per host)
-- Response caching with 60s TTL (configurable)
-- SQLite for fast local storage
 
 ## Project Structure
 
