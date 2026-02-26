@@ -43,4 +43,3 @@ lint:
 build-all:
 	GOOS=linux GOARCH=amd64 go build -o olt-api-linux-amd64 ./cmd/server
 	GOOS=darwin GOARCH=amd64 go build -o olt-api-darwin-amd64 ./cmd/server
-	GOOS=windows GOARCH=amd64 go build -o olt-api-windows-amd64.exe ./cmd/server

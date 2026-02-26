@@ -42,7 +42,7 @@ func Init(dbPath string) (*gorm.DB, error) {
 	}
 
 	// Run migrations
-	if err := db.AutoMigrate(&Device{}, &ONULog{}, &CacheEntry{}); err != nil {
+	if err := db.AutoMigrate(&Device{}, &ONULog{}, &CacheEntry{}, &User{}); err != nil {
 		return nil, err
 	}
 

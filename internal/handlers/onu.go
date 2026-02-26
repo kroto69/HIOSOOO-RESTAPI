@@ -25,11 +25,16 @@ func normalizeONUID(onuID string) string {
 	return onuID
 }
 
-// GetONUs handles GET /api/v1/devices/:device_id/pons/:pon_id/onus
+// GetONUs handles:
+// - GET /api/v1/devices/:device_id/pons/:pon_id/onus
+// - GET /api/v1/devices/:device_id/onus?pon_id=...
 func GetONUs(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deviceID := c.Param("id")
-		ponID := c.Param("pon_id")
+		ponID := strings.TrimSpace(c.Param("pon_id"))
+		if ponID == "" {
+			ponID = strings.TrimSpace(c.Query("pon_id"))
+		}
 
 		if deviceID == "" {
 			response.BadRequest(c, "Device ID is required")
@@ -89,6 +94,37 @@ func GetONUDetail(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 		}
 
 		response.Success(c, detail, deviceID)
+	}
+}
+
+// GetONUTraffic handles GET /api/v1/devices/:id/onus/:onu_id/traffic
+func GetONUTraffic(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		deviceID := c.Param("id")
+		onuID := c.Param("onu_id")
+
+		if deviceID == "" {
+			response.BadRequest(c, "Device ID is required")
+			return
+		}
+		if onuID == "" {
+			response.BadRequest(c, "ONU ID is required")
+			return
+		}
+
+		// Convert simplified ONU ID to full format
+		onuID = normalizeONUID(onuID)
+
+		deviceSvc := service.NewDeviceService(db, cfg)
+		onuSvc := service.NewONUService(db, cfg, deviceSvc)
+
+		traffic, err := onuSvc.GetONUTraffic(deviceID, onuID)
+		if err != nil {
+			response.InternalError(c, err.Error())
+			return
+		}
+
+		response.Success(c, traffic, deviceID)
 	}
 }
 

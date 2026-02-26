@@ -10,6 +10,7 @@ HIOSO OLT management REST API with support for multiple devices.
 - 💾 SQLite database (zero-config, single file)
 - 📦 Single binary deployment
 - 🔒 Basic authentication for OLT access
+- 🔐 JWT-based dashboard user authentication
 - 📝 Response caching with configurable TTL
 
 
@@ -37,15 +38,6 @@ chmod +x scripts/install.sh
 ./olt-api
 ```
 
-### Windows
-
-```cmd
-git clone https://github.com/kroto69/HIOSOOO-RESTAPI.git
-cd HIOSOOO-RESTAPI
-scripts\install.bat
-olt-api.exe
-```
-
 ### Using Make
 
 ```bash
@@ -53,11 +45,42 @@ make install
 make run
 ```
 
+Note: `Makefile` workflow is Linux-focused.
+
 ### Development Mode
 
 ```bash
 make dev
 ```
+
+### Run Modes
+
+From the project root, choose one of the following:
+
+#### 1) Backend Only
+
+```bash
+./olt-api
+```
+
+Or run in development mode:
+
+```bash
+go run ./cmd/server/main.go
+```
+
+- Backend API: `http://localhost:3000`
+
+#### 2) Backend + Frontend
+
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+- Backend API: `http://localhost:3000`
+- Frontend dashboard: `http://localhost:5173`
+- Stop services with `Ctrl+C`
 
 ## API Documentation
 
@@ -90,7 +113,17 @@ scraper:
 logging:
   level: info
   file: ./logs/app.log
+
+auth:
+  jwt_secret: ""         # use AUTH_JWT_SECRET in production
+  access_token_ttl: 12h
+  initial_username: admin
+  initial_password: ""   # if empty, random password is generated on first run
 ```
+
+Notes:
+- `POST /api/v1/auth/login` returns bearer token for dashboard/API access.
+- If `auth.initial_password` is empty and no user exists yet, backend creates admin user with random password and prints it in server logs.
 
 ## API Response Format
 

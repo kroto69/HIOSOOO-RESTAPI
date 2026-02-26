@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply font-sans bg-surface text-ink antialiased;
+  background-image:
+    radial-gradient(circle at 16% 12%, rgba(68, 120, 170, 0.14), transparent 44%),
+    radial-gradient(circle at 84% 10%, rgba(159, 216, 197, 0.14), transparent 40%),
+    linear-gradient(180deg, #f1f7fb 0%, #ecf5fb 52%, #e8f2f9 100%);
+  background-attachment: fixed;
+}
+
+@layer base {
+  h1 {
+    @apply text-3xl font-bold tracking-tight;
+  }
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+  h3 {
+    @apply text-xl font-semibold;
+  }
+}
+
+@layer components {
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lift;
+  }
+  .cappuccino-frame {
+    @apply rounded-2xl border border-slate-200 bg-white/90 shadow-card backdrop-blur;
+  }
+  .status-pulse {
+    @apply relative inline-flex h-2.5 w-2.5;
+  }
+  .status-pulse::before {
+    content: "";
+    @apply absolute inset-0 rounded-full bg-current opacity-70 animate-pulse-soft;
+  }
+  .status-pulse::after {
+    content: "";
+    @apply absolute inset-0 rounded-full bg-current;
+  }
+}

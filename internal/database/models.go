@@ -15,6 +15,16 @@ type Device struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// User represents dashboard user account
+type User struct {
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	Username     string    `gorm:"uniqueIndex;not null" json:"username"`
+	PasswordHash string    `gorm:"not null" json:"-"`
+	Role         string    `gorm:"default:admin" json:"role"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 // DeviceRequest is used for creating/updating devices
 type DeviceRequest struct {
 	ID       string `json:"id" binding:"required"`
@@ -33,6 +43,30 @@ type DeviceUpdateRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Status   string `json:"status"`
+}
+
+// LoginRequest is used for authentication
+type LoginRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+// ChangePasswordRequest is used for rotating password
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required"`
+}
+
+// CreateUserRequest is used for creating dashboard users
+type CreateUserRequest struct {
+	Username string `json:"username" binding:"required,min=3,max=64"`
+	Password string `json:"password" binding:"required,min=8"`
+	Role     string `json:"role"` // optional: admin | operator
+}
+
+// ResetUserPasswordRequest is used by admin to reset a user password
+type ResetUserPasswordRequest struct {
+	NewPassword string `json:"new_password" binding:"required,min=8"`
 }
 
 // ONULog for historical tracking of ONU metrics

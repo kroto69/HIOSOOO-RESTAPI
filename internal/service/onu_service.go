@@ -54,18 +54,10 @@ func (s *ONUService) GetONUsByPON(deviceID, ponID string, filter string) ([]pars
 		return nil, err
 	}
 
-	// Fetch ONU list from OLT
-	html, err := client.Get("/onuOverview.asp", map[string]string{
-		"oltponno": ponID,
-	})
+	// Fetch ONU list from OLT with endpoint fallback.
+	onus, err := s.fetchONUsWithFallback(client, ponID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch ONU list: %w", err)
-	}
-
-	// Parse response
-	onus, err := s.parser.ParseONUList(html)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse ONU list: %w", err)
+		return nil, err
 	}
 
 	// Cache result
@@ -135,6 +127,35 @@ func (s *ONUService) GetONUDetail(deviceID, onuID string) (*parser.ONUDetailResp
 	}
 
 	return detail, nil
+}
+
+// GetONUTraffic retrieves traffic counters for a specific ONU.
+func (s *ONUService) GetONUTraffic(deviceID, onuID string) (*parser.ONUTrafficResponse, error) {
+	parts := strings.Split(onuID, ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid ONU ID format: %s (expected format: PON:ONU, e.g., 0/1:8)", onuID)
+	}
+	ponNo := parts[0]
+
+	client, err := s.deviceService.GetClient(deviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	html, err := client.Get("/onuLlidStatistic.asp", map[string]string{
+		"onuno":    onuID,
+		"oltponno": ponNo,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch ONU traffic: %w", err)
+	}
+
+	traffic, err := s.parser.ParseONUTraffic(html)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse ONU traffic: %w", err)
+	}
+
+	return traffic, nil
 }
 
 // ONUUpdateRequest is used for updating ONU properties
@@ -234,6 +255,7 @@ func (s *ONUService) PerformAction(deviceID, onuID string, action string) error 
 
 	// Submit form to /goform/setOnu with current name preserved
 	_, err = client.Post("/goform/setOnu", map[string]string{
+		"oltponno":     ponNo,
 		"onuId":        onuID,
 		"onuName":      currentName,
 		"onuOperation": onuOperation,
@@ -316,17 +338,9 @@ func (s *ONUService) GetAllONUs(deviceID string, filter string) ([]parser.ONURes
 	for _, pon := range pons {
 		ponID := pon.PONID
 		pool.Submit(func() {
-			html, err := client.Get("/onuOverview.asp", map[string]string{
-				"oltponno": ponID,
-			})
+			onus, err := s.fetchONUsWithFallback(client, ponID)
 			if err != nil {
 				log.Printf("[ONU] Failed to fetch ONUs from PON %s: %v", ponID, err)
-				return
-			}
-
-			onus, err := s.parser.ParseONUList(html)
-			if err != nil {
-				log.Printf("[ONU] Failed to parse ONUs from PON %s: %v", ponID, err)
 				return
 			}
 
@@ -340,6 +354,151 @@ func (s *ONUService) GetAllONUs(deviceID string, filter string) ([]parser.ONURes
 
 	log.Printf("[ONU] Fetched %d total ONUs from device %s", len(allONUs), deviceID)
 	return s.filterONUs(allONUs, filter), nil
+}
+
+func (s *ONUService) fetchONUsWithFallback(client *scraper.Client, ponID string) ([]parser.ONUResponse, error) {
+	type attemptResult struct {
+		endpoint string
+		onus     []parser.ONUResponse
+		err      error
+	}
+
+	type endpointDef struct {
+		path   string
+		allPon bool
+	}
+	endpoints := []endpointDef{
+		{path: "/onuOverview.asp"},
+		{path: "/onuConfigOnuList.asp"},
+		// Some firmware paginates per-PON endpoint to 8 rows/page.
+		// This endpoint usually returns all ONUs, then we filter by selected PON.
+		{path: "/onuAllPonOnuList.asp", allPon: true},
+	}
+
+	results := make([]attemptResult, 0, len(endpoints))
+	for _, endpoint := range endpoints {
+		params := map[string]string{}
+		if !endpoint.allPon {
+			params["oltponno"] = ponID
+		}
+
+		html, reqErr := client.Get(endpoint.path, params)
+		if reqErr != nil {
+			results = append(results, attemptResult{
+				endpoint: endpoint.path,
+				err:      fmt.Errorf("%s request failed: %w", endpoint.path, reqErr),
+			})
+			continue
+		}
+
+		onus, parseErr := s.parser.ParseONUList(html)
+		if parseErr != nil {
+			results = append(results, attemptResult{
+				endpoint: endpoint.path,
+				err:      fmt.Errorf("%s parse failed: %w", endpoint.path, parseErr),
+			})
+			continue
+		}
+		if endpoint.allPon {
+			onus = filterONUsByPONPrefix(onus, ponID)
+		}
+		log.Printf("[ONU] Endpoint %s returned %d rows for PON %s", endpoint.path, len(onus), ponID)
+		if len(onus) == 0 {
+			results = append(results, attemptResult{
+				endpoint: endpoint.path,
+				err:      fmt.Errorf("%s returned no ONU rows for PON %s", endpoint.path, ponID),
+			})
+			continue
+		}
+
+		results = append(results, attemptResult{
+			endpoint: endpoint.path,
+			onus:     onus,
+		})
+	}
+
+	var best []parser.ONUResponse
+	var errs []string
+	for _, result := range results {
+		if result.err != nil {
+			errs = append(errs, result.err.Error())
+			continue
+		}
+		if len(result.onus) > len(best) {
+			best = result.onus
+		}
+	}
+
+	if len(best) > 0 {
+		return best, nil
+	}
+	if len(errs) > 0 {
+		return nil, fmt.Errorf(strings.Join(errs, "; "))
+	}
+	return nil, fmt.Errorf("failed to fetch ONU list for PON %s", ponID)
+}
+
+func filterONUsByPONPrefix(onus []parser.ONUResponse, ponID string) []parser.ONUResponse {
+	normalizedPon := strings.TrimSpace(ponID)
+	if normalizedPon == "" {
+		return onus
+	}
+
+	filtered := make([]parser.ONUResponse, 0, len(onus))
+	for _, onu := range onus {
+		onuID := strings.TrimSpace(onu.ONUID)
+		if onuID == "" {
+			continue
+		}
+		parts := strings.SplitN(onuID, ":", 2)
+		onuPon := strings.TrimSpace(parts[0])
+		if onuPon == "" {
+			continue
+		}
+
+		// Match exact PON and common equivalent formats:
+		// 0/1 == 1, and hierarchical variants 0/1/1, 0/1/2, etc.
+		if matchPONID(onuPon, normalizedPon) {
+			filtered = append(filtered, onu)
+		}
+	}
+	return filtered
+}
+
+func matchPONID(candidate string, target string) bool {
+	candidate = strings.TrimSpace(candidate)
+	target = strings.TrimSpace(target)
+	if candidate == "" || target == "" {
+		return false
+	}
+	if candidate == target {
+		return true
+	}
+
+	cParts := strings.Split(candidate, "/")
+	tParts := strings.Split(target, "/")
+
+	// Hierarchical prefix match (e.g. 0/1 matches 0/1/1).
+	if len(cParts) >= len(tParts) {
+		if strings.Join(cParts[:len(tParts)], "/") == target {
+			return true
+		}
+	}
+	if len(tParts) >= len(cParts) {
+		if strings.Join(tParts[:len(cParts)], "/") == candidate {
+			return true
+		}
+	}
+
+	// Legacy short format: 1 <-> 0/1.
+	if len(cParts) == 1 && len(tParts) == 2 && tParts[0] == "0" && cParts[0] == tParts[1] {
+		return true
+	}
+	if len(tParts) == 1 && len(cParts) == 2 && cParts[0] == "0" && tParts[0] == cParts[1] {
+		return true
+	}
+
+	return false
 }
 
 // filterONUs filters ONUs based on status

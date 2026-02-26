@@ -2,6 +2,10 @@ package service
 
 import (
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"olt-api/internal/config"
@@ -134,8 +138,6 @@ func (s *DeviceService) CheckStatus(id string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	client := scraper.NewClient(device.BaseURL, device.Username, device.Password, s.cfg.Scraper.Timeout)
-
 	status := map[string]interface{}{
 		"device_id":  device.ID,
 		"name":       device.Name,
@@ -144,10 +146,42 @@ func (s *DeviceService) CheckStatus(id string) (map[string]interface{}, error) {
 		"checked_at": time.Now(),
 	}
 
-	if err := client.CheckConnection(); err != nil {
+	baseURL := strings.TrimRight(device.BaseURL, "/")
+	if !strings.HasPrefix(baseURL, "http://") && !strings.HasPrefix(baseURL, "https://") {
+		baseURL = "http://" + baseURL
+	}
+
+	parsed, err := url.Parse(baseURL)
+	if err != nil || parsed.Hostname() == "" {
+		status["error"] = "invalid base URL"
+		return status, nil
+	}
+
+	host := parsed.Hostname()
+	port := 0
+	if parsed.Port() != "" {
+		if parsedPort, parseErr := strconv.Atoi(parsed.Port()); parseErr == nil {
+			port = parsedPort
+		}
+	}
+	if port == 0 && device.Port > 0 {
+		port = device.Port
+	}
+	if port == 0 {
+		if parsed.Scheme == "https" {
+			port = 443
+		} else {
+			port = 80
+		}
+	}
+
+	address := fmt.Sprintf("%s:%d", host, port)
+	conn, err := net.DialTimeout("tcp", address, s.cfg.Scraper.Timeout)
+	if err != nil {
 		status["error"] = err.Error()
 		return status, nil
 	}
+	_ = conn.Close()
 
 	status["reachable"] = true
 	return status, nil
@@ -161,9 +195,22 @@ func (s *DeviceService) GetClient(deviceID string) (*scraper.Client, error) {
 	}
 
 	// Build base URL with port
-	baseURL := device.BaseURL
+	baseURL := strings.TrimRight(device.BaseURL, "/")
+	if !strings.HasPrefix(baseURL, "http://") && !strings.HasPrefix(baseURL, "https://") {
+		baseURL = "http://" + baseURL
+	}
+
 	if device.Port > 0 && device.Port != 80 {
-		baseURL = fmt.Sprintf("%s:%d", device.BaseURL, device.Port)
+		if parsed, err := url.Parse(baseURL); err == nil {
+			if parsed.Host != "" && !strings.Contains(parsed.Host, ":") {
+				parsed.Host = fmt.Sprintf("%s:%d", parsed.Host, device.Port)
+				baseURL = parsed.String()
+			}
+		} else {
+			if !strings.Contains(baseURL, ":") {
+				baseURL = fmt.Sprintf("%s:%d", baseURL, device.Port)
+			}
+		}
 	}
 
 	return scraper.NewClient(baseURL, device.Username, device.Password, s.cfg.Scraper.Timeout), nil
@@ -176,18 +223,25 @@ func (s *DeviceService) GetSystemInfo(deviceID string) (*parser.SystemInfoRespon
 		return nil, err
 	}
 
-	// Fetch system info from OLT
-	html, err := client.Get("/system.asp", nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch system info: %w", err)
-	}
-
-	// Parse response
 	p := parser.NewParser()
-	sysInfo, err := p.ParseSystemInfo(html)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse system info: %w", err)
+	endpoints := []string{"/system.asp", "/syste.asp"}
+	var errors []string
+
+	for _, endpoint := range endpoints {
+		html, reqErr := client.Get(endpoint, nil)
+		if reqErr != nil {
+			errors = append(errors, fmt.Sprintf("%s request failed: %v", endpoint, reqErr))
+			continue
+		}
+
+		sysInfo, parseErr := p.ParseSystemInfo(html)
+		if parseErr != nil {
+			errors = append(errors, fmt.Sprintf("%s parse failed: %v", endpoint, parseErr))
+			continue
+		}
+
+		return sysInfo, nil
 	}
 
-	return sysInfo, nil
+	return nil, fmt.Errorf("failed to load system info: %s", strings.Join(errors, "; "))
 }

@@ -19,3 +19,9 @@ scraper:
 logging:
   level: info
   file: ./logs/app.log
+
+auth:
+  jwt_secret: ""
+  access_token_ttl: 12h
+  initial_username: admin
+  initial_password: admin

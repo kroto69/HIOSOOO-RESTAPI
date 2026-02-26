@@ -4,11 +4,45 @@ Base URL: `http://localhost:3000`
 
 ---
 
+## Authentication
+
+### Login
+```bash
+curl -X POST "http://localhost:3000/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "your-password"
+  }'
+```
+
+### Current User
+```bash
+curl "http://localhost:3000/api/v1/auth/me" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+### Change Password
+```bash
+curl -X POST "http://localhost:3000/api/v1/auth/change-password" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "current_password": "old-password",
+    "new_password": "new-strong-password"
+  }'
+```
+
+**Important:** All `/api/v1/devices/*` endpoints now require `Authorization: Bearer <ACCESS_TOKEN>`.
+
+---
+
 ## Device Management
 
 ### Create/Update Device
 ```bash
 curl -X POST "http://localhost:3000/api/v1/devices" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
     "id": "olt-001",
@@ -22,27 +56,32 @@ curl -X POST "http://localhost:3000/api/v1/devices" \
 
 ### List All Devices
 ```bash
-curl "http://localhost:3000/api/v1/devices"
+curl "http://localhost:3000/api/v1/devices" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ### Get Device Detail
 ```bash
-curl "http://localhost:3000/api/v1/devices/olt-1"
+curl "http://localhost:3000/api/v1/devices/olt-1" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ### Delete Device
 ```bash
-curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1"
+curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ### Delete All Devices
 ```bash
-curl -X DELETE "http://localhost:3000/api/v1/devices"
+curl -X DELETE "http://localhost:3000/api/v1/devices" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ### Check Device Status
 ```bash
-curl "http://localhost:3000/api/v1/devices/olt-1/status"
+curl "http://localhost:3000/api/v1/devices/olt-1/status" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ---
@@ -51,7 +90,8 @@ curl "http://localhost:3000/api/v1/devices/olt-1/status"
 
 ### Get PON List
 ```bash
-curl "http://localhost:3000/api/v1/devices/olt-1/pons"
+curl "http://localhost:3000/api/v1/devices/olt-1/pons" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 **Response:**
@@ -71,10 +111,12 @@ curl "http://localhost:3000/api/v1/devices/olt-1/pons"
 ### Get ONUs by PON
 ```bash
 # Get all ONUs on PON 1
-curl "http://localhost:3000/api/v1/devices/olt-1/pons/1/onus"
+curl "http://localhost:3000/api/v1/devices/olt-1/pons/1/onus" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 
 # Get only online ONUs
-curl "http://localhost:3000/api/v1/devices/olt-1/pons/1/onus?filter=online"
+curl "http://localhost:3000/api/v1/devices/olt-1/pons/1/onus?filter=online" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 | Parameter | Description |
@@ -84,12 +126,19 @@ curl "http://localhost:3000/api/v1/devices/olt-1/pons/1/onus?filter=online"
 
 ### Get ONU Detail
 ```bash
-curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:4"
+curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:1" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 | Parameter | Description |
 |-----------|-------------|
 | `:onu_id` | Format `pon:onu` (e.g., `1:4` for ONU 4 on PON 1) |
+
+### Get ONU Traffic Counter
+```bash
+curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:1/traffic" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
 
 **Response:**
 ```json
@@ -112,14 +161,16 @@ curl "http://localhost:3000/api/v1/devices/olt-1/onus/1:4"
 
 ### Update ONU Name
 ```bash
-curl -X PUT "http://localhost:3000/api/v1/devices/olt-1/onus/1:4" \
+curl -X PUT "http://localhost:3000/api/v1/devices/olt-1/onus/1:1" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"name": "JOKOWOW"}'
 ```
 
 ### Reboot ONU
 ```bash
-curl -X POST "http://localhost:3000/api/v1/devices/olt-1/onus/1:4/action" \
+curl -X POST "http://localhost:3000/api/v1/devices/olt-1/onus/1:1/action" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"action": "reboot"}'
 ```
@@ -128,7 +179,8 @@ curl -X POST "http://localhost:3000/api/v1/devices/olt-1/onus/1:4/action" \
 
 ### Delete ONU
 ```bash
-curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1/onus/1:4"
+curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1/onus/1:1" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ---
@@ -137,7 +189,8 @@ curl -X DELETE "http://localhost:3000/api/v1/devices/olt-1/onus/1:4"
 
 ### Get System Info
 ```bash
-curl "http://localhost:3000/api/v1/devices/olt-1/system"
+curl "http://localhost:3000/api/v1/devices/olt-1/system" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 **Response:**
@@ -156,12 +209,14 @@ curl "http://localhost:3000/api/v1/devices/olt-1/system"
 
 ### Save Configuration
 ```bash
-curl -X POST "http://localhost:3000/api/v1/devices/olt-1/save-config"
+curl -X POST "http://localhost:3000/api/v1/devices/olt-1/save-config" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ### Get ONU Logs
 ```bash
-curl "http://localhost:3000/api/v1/devices/olt-1/logs?limit=100"
+curl "http://localhost:3000/api/v1/devices/olt-1/logs?limit=100" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ---
@@ -198,6 +253,7 @@ All errors return:
 
 | Status Code | Description |
 |-------------|-------------|
+| 401 | Unauthorized - Invalid or missing bearer token |
 | 400 | Bad Request - Invalid input |
 | 404 | Not Found - Resource not found |
 | 500 | Internal Server Error |

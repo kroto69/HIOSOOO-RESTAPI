@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"olt-api/internal/config"
 	"olt-api/internal/database"
@@ -52,15 +53,9 @@ func (s *PONService) GetPONList(deviceID string) ([]parser.PONResponse, error) {
 	}
 
 	// Fetch PON list from OLT
-	html, err := client.Get("/onuOverviewPonList.asp", nil)
+	pons, err := s.fetchPONListWithFallback(client)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch PON list: %w", err)
-	}
-
-	// Parse response
-	pons, err := s.parser.ParsePONList(html)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse PON list: %w", err)
+		return nil, err
 	}
 
 	// Cache result
@@ -87,16 +82,9 @@ func (s *PONService) GetPONListWithClient(client *scraper.Client, deviceID strin
 		}
 	}
 
-	// Fetch PON list from OLT
-	html, err := client.Get("/onuOverviewPonList.asp", nil)
+	pons, err := s.fetchPONListWithFallback(client)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch PON list: %w", err)
-	}
-
-	// Parse response
-	pons, err := s.parser.ParsePONList(html)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse PON list: %w", err)
+		return nil, err
 	}
 
 	// Cache result
@@ -107,4 +95,32 @@ func (s *PONService) GetPONListWithClient(client *scraper.Client, deviceID strin
 	}
 
 	return pons, nil
+}
+
+func (s *PONService) fetchPONListWithFallback(client *scraper.Client) ([]parser.PONResponse, error) {
+	endpoints := []string{
+		"/onuOverviewPonList.asp",
+		"/onuConfigPonList.asp",
+	}
+
+	var errs []string
+	for _, endpoint := range endpoints {
+		html, reqErr := client.Get(endpoint, nil)
+		if reqErr != nil {
+			errs = append(errs, fmt.Sprintf("%s request failed: %v", endpoint, reqErr))
+			continue
+		}
+
+		pons, parseErr := s.parser.ParsePONList(html)
+		if parseErr != nil {
+			errs = append(errs, fmt.Sprintf("%s parse failed: %v", endpoint, parseErr))
+			continue
+		}
+		if len(pons) > 0 {
+			return pons, nil
+		}
+		errs = append(errs, fmt.Sprintf("%s returned empty PON list", endpoint))
+	}
+
+	return nil, fmt.Errorf(strings.Join(errs, "; "))
 }
