@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { ChevronDown, LayoutDashboard, Settings, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-import logo from "@/logo3.png";
+import logo from "@/images/logo3.png";
 import { listDevices } from "@/lib/api";
 import { useUiStore } from "@/store/useUiStore";
 import { Button } from "@/components/ui/button";

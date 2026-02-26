@@ -24,6 +24,7 @@ import type { Onu, OnuDetail, PonPort } from "@/types/api";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import OnuDetailDialog from "@/components/OnuDetailDialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -752,6 +753,14 @@ export default function OltDetail() {
                                   : rxTone === "danger"
                                     ? "text-danger"
                                     : "text-slate-500";
+                            const rxVariant =
+                              rxTone === "success"
+                                ? "success"
+                                : rxTone === "warning"
+                                  ? "warning"
+                                  : rxTone === "danger"
+                                    ? "danger"
+                                    : "default";
                             return (
                               <TableRow key={`${onu.onu_id}-${onu.mac_address}-${index}`}>
                                 <TableCell className="font-semibold text-slate-900">
@@ -769,9 +778,12 @@ export default function OltDetail() {
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <div className={["text-xs font-semibold", rxTextClass].join(" ")}>
+                                  <Badge
+                                    variant={rxVariant}
+                                    className={["font-semibold", rxTextClass].join(" ")}
+                                  >
                                     Rx {formatSignal(rxPower)}
-                                  </div>
+                                  </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">

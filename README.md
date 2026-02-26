@@ -2,6 +2,11 @@
 
 HIOSO OLT management REST API with support for multiple devices.
 
+## Dashboard Preview
+
+![Dashboard Preview](frontend/src/images/images1.jpg)
+![Dashboard Preview 2](frontend/src/images/images2.jpg)
+
 ## Features
 
 - 🚀 High-performance Go backend with Gin framework
@@ -13,6 +18,14 @@ HIOSO OLT management REST API with support for multiple devices.
 - 🔐 JWT-based dashboard user authentication
 - 📝 Response caching with configurable TTL
 
+## Frontend Assets
+
+Dashboard preview image 1: `frontend/src/images/images1.jpg`  
+![Dashboard Preview 1](frontend/src/images/images1.jpg)
+
+Dashboard preview image 2: `frontend/src/images/images2.jpg`  
+![Dashboard Preview 2](frontend/src/images/images2.jpg)
+
 
 ## Methode kerjanya :
 
@@ -23,64 +36,78 @@ This API operates using a simple three-step process:
 3.  **API Wrapper**: Wraps OLT functions (Reboot, Update Name, etc.) into a standard **REST API** for easy integration with other applications.
 
 
-## Quick Start
+## Install & Usage (Linux)
 
-### Linux/Mac
+### 1) Clone Repository
 
 ```bash
-# Clone repository
 git clone https://github.com/kroto69/HIOSOOO-RESTAPI.git
 cd HIOSOOO-RESTAPI
+```
 
-# Install and Run
+### 2) Pilih Mode Menjalankan
+
+#### Mode A: Backend Saja
+
+Requirements:
+- Go (untuk build / run dari source)
+
+Jalankan cepat:
+```bash
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ./olt-api
 ```
 
-### Using Make
-
-```bash
-make install
-make run
-```
-
-Note: `Makefile` workflow is Linux-focused.
-
-### Development Mode
-
-```bash
-make dev
-```
-
-### Run Modes
-
-From the project root, choose one of the following:
-
-#### 1) Backend Only
-
-```bash
-./olt-api
-```
-
-Or run in development mode:
-
+Alternatif development mode:
 ```bash
 go run ./cmd/server/main.go
 ```
 
-- Backend API: `http://localhost:3000`
+Akses:
+- API backend: `http://localhost:3000`
 
-#### 2) Backend + Frontend
+#### Mode B: All-in-One (Backend + Frontend Dashboard)
 
+Requirements:
+- Go
+- Node.js + npm
+
+Jalankan:
 ```bash
 chmod +x run.sh
 ./run.sh
 ```
 
-- Backend API: `http://localhost:3000`
-- Frontend dashboard: `http://localhost:5173`
-- Stop services with `Ctrl+C`
+`run.sh` akan:
+- build backend bila binary belum ada / source berubah
+- install dependency frontend bila belum ada
+- menjalankan backend + frontend sekaligus
+
+Akses:
+- API backend: `http://localhost:3000`
+- Dashboard frontend: `http://localhost:5173`
+
+Stop service:
+- tekan `Ctrl+C`
+
+### 3) Login Dashboard
+
+Default awal (sesuai config saat ini):
+- Username: `admin`
+- Password: `admin`
+
+Disarankan langsung ganti password setelah login pertama.
+
+### Optional: Makefile
+
+```bash
+make install
+make run
+make dev
+```
+
+Note: workflow `Makefile` difokuskan untuk Linux.
 
 ## API Documentation
 
@@ -155,6 +182,8 @@ Error responses:
 ```
 olt-api/
 ├── cmd/server/main.go          # Application entry point
+├── frontend/                   # Vite React TypeScript dashboard
+│   └── src/images/             # Dashboard static assets (logo, preview)
 ├── internal/
 │   ├── config/                 # Configuration loading
 │   ├── database/               # Database models and setup
@@ -179,4 +208,4 @@ MIT
 This project was built by **[Kroto69]** with the assistance of AI technology.
 
 ---
-*Developed with efficient coding practices and modern Go patterns.*
+
