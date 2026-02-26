@@ -1,4 +1,4 @@
-# HIOSOOO-RESTAPI
+# HIOSOO-DASBOR
 
 HIOSO OLT management REST API with support for multiple devices.
 
@@ -18,15 +18,6 @@ HIOSO OLT management REST API with support for multiple devices.
 - 🔐 JWT-based dashboard user authentication
 - 📝 Response caching with configurable TTL
 
-## Frontend Assets
-
-Dashboard preview image 1: `frontend/src/images/images1.jpg`  
-![Dashboard Preview 1](frontend/src/images/images1.jpg)
-
-Dashboard preview image 2: `frontend/src/images/images2.jpg`  
-![Dashboard Preview 2](frontend/src/images/images2.jpg)
-
-
 ## Methode kerjanya :
 
 This API operates using a simple three-step process:
@@ -41,8 +32,8 @@ This API operates using a simple three-step process:
 ### 1) Clone Repository
 
 ```bash
-git clone https://github.com/kroto69/HIOSOOO-RESTAPI.git
-cd HIOSOOO-RESTAPI
+git clone https://github.com/kroto69/HIOSOO-DASBOR.git
+cd HIOSOO-DASBOR
 ```
 
 ### 2) Pilih Mode Menjalankan
@@ -208,4 +199,3 @@ MIT
 This project was built by **[Kroto69]** with the assistance of AI technology.
 
 ---
-
