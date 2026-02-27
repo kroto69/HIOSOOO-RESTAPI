@@ -2,6 +2,17 @@
 
 > OLT Dashboard & REST API untuk manajemen dan monitoring jaringan berbasis Go + React (Vite).
 
+## Dashboard Preview
+
+<p align="center">
+  <img src="frontend/src/images/images1.jpg" alt="Dashboard preview 1" width="48%" />
+  <img src="frontend/src/images/images2.jpg" alt="Dashboard preview 2" width="48%" />
+</p>
+<p align="center">
+  <img src="frontend/src/images/images3.jpg" alt="Dashboard preview 3" width="48%" />
+  <img src="frontend/src/images/images4.jpg" alt="Dashboard preview 4" width="48%" />
+</p>
+
 ---
 
 ## Prerequisites
@@ -222,3 +233,9 @@ Detail endpoint ada di [`API.md`](./API.md).
 | Backend  | Go               |
 | Frontend | React + Vite     |
 | Database | SQLite (via CGO) |
+
+---
+
+## Credit
+
+Built with AI by [@kroto69](https://github.com/kroto69).
