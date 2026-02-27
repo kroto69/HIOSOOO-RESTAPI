@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   AuditLog,
   AuthUser,
+  DeviceConnectionCheck,
   Device,
   DeviceStatus,
   LoginResponse,
@@ -226,6 +227,19 @@ export async function getDeviceStatus(id: string): Promise<DeviceStatus> {
     `/api/v1/devices/${id}/status`
   );
   return unwrap(data, "Failed to check device status");
+}
+
+export async function checkDeviceConnection(payload: {
+  base_url: string;
+  port: number;
+  username: string;
+  password: string;
+}): Promise<DeviceConnectionCheck> {
+  const { data } = await api.post<ApiResponse<DeviceConnectionCheck>>(
+    "/api/v1/devices/check-connection",
+    payload
+  );
+  return unwrap(data, "Failed to check device connection");
 }
 
 export async function getPons(id: string): Promise<PonPort[]> {

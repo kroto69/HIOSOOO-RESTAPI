@@ -774,6 +774,7 @@ export default function Settings() {
         onOpenChange={setDialogOpen}
         initial={dialogInitial}
         submitLabel={editingDevice ? "Update OLT" : "Create OLT"}
+        requireConnectionCheck={!editingDevice}
         loading={createMutation.isPending || updateMutation.isPending}
         onSubmit={handleSubmit}
       />

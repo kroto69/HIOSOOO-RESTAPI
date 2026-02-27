@@ -187,6 +187,83 @@ func (s *DeviceService) CheckStatus(id string) (map[string]interface{}, error) {
 	return status, nil
 }
 
+// CheckConnectionPayload checks OLT connectivity using payload fields (before save).
+func (s *DeviceService) CheckConnectionPayload(req *database.DeviceConnectionCheckRequest) (map[string]interface{}, error) {
+	baseURLInput := strings.TrimSpace(req.BaseURL)
+	status := map[string]interface{}{
+		"base_url":      baseURLInput,
+		"reachable":     false,
+		"authenticated": false,
+		"auth_checked":  false,
+		"checked_at":    time.Now(),
+	}
+
+	if baseURLInput == "" {
+		status["error"] = "invalid base URL"
+		return status, nil
+	}
+
+	baseURL := strings.TrimRight(baseURLInput, "/")
+	if !strings.HasPrefix(baseURL, "http://") && !strings.HasPrefix(baseURL, "https://") {
+		baseURL = "http://" + baseURL
+	}
+
+	parsed, err := url.Parse(baseURL)
+	if err != nil || parsed.Hostname() == "" {
+		status["error"] = "invalid base URL"
+		return status, nil
+	}
+
+	host := parsed.Hostname()
+	port := req.Port
+	if port <= 0 && parsed.Port() != "" {
+		if parsedPort, parseErr := strconv.Atoi(parsed.Port()); parseErr == nil {
+			port = parsedPort
+		}
+	}
+	if port <= 0 {
+		if parsed.Scheme == "https" {
+			port = 443
+		} else {
+			port = 80
+		}
+	}
+
+	status["host"] = host
+	status["port"] = port
+
+	address := fmt.Sprintf("%s:%d", host, port)
+	conn, err := net.DialTimeout("tcp", address, s.cfg.Scraper.Timeout)
+	if err != nil {
+		status["error"] = err.Error()
+		return status, nil
+	}
+	_ = conn.Close()
+	status["reachable"] = true
+
+	username := strings.TrimSpace(req.Username)
+	password := strings.TrimSpace(req.Password)
+	if username == "" || password == "" {
+		return status, nil
+	}
+
+	authBaseURL := fmt.Sprintf("%s://%s", parsed.Scheme, host)
+	if (parsed.Scheme == "http" && port != 80) || (parsed.Scheme == "https" && port != 443) {
+		authBaseURL = fmt.Sprintf("%s://%s:%d", parsed.Scheme, host, port)
+	}
+
+	status["auth_checked"] = true
+	status["base_url"] = authBaseURL
+	client := scraper.NewClient(authBaseURL, username, password, s.cfg.Scraper.Timeout)
+	if err := client.CheckConnection(); err != nil {
+		status["error"] = err.Error()
+		return status, nil
+	}
+
+	status["authenticated"] = true
+	return status, nil
+}
+
 // GetClient returns an HTTP client for a device
 func (s *DeviceService) GetClient(deviceID string) (*scraper.Client, error) {
 	device, err := s.GetByID(deviceID)

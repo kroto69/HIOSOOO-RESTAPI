@@ -157,3 +157,32 @@ func CheckDeviceStatus(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 		response.Success(c, status, id)
 	}
 }
+
+// CheckDeviceConnection handles POST /api/v1/devices/check-connection
+func CheckDeviceConnection(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req database.DeviceConnectionCheckRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			response.BadRequest(c, "Invalid request: "+err.Error())
+			return
+		}
+
+		svc := service.NewDeviceService(db, cfg)
+		status, err := svc.CheckConnectionPayload(&req)
+		if err != nil {
+			response.InternalError(c, err.Error())
+			return
+		}
+
+		reachable, _ := status["reachable"].(bool)
+		authenticated, _ := status["authenticated"].(bool)
+		writeAuditLog(c, db, "device.connection.checked", "device", "", map[string]interface{}{
+			"host":          req.BaseURL,
+			"port":          req.Port,
+			"reachable":     reachable,
+			"authenticated": authenticated,
+		})
+
+		response.Success(c, status, "")
+	}
+}

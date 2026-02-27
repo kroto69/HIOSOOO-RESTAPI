@@ -60,6 +60,14 @@ type DeviceUpdateRequest struct {
 	Status   string `json:"status"`
 }
 
+// DeviceConnectionCheckRequest is used to test OLT connectivity before saving.
+type DeviceConnectionCheckRequest struct {
+	BaseURL  string `json:"base_url" binding:"required"`
+	Port     int    `json:"port"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // LoginRequest is used for authentication
 type LoginRequest struct {
 	Username string `json:"username" binding:"required"`

@@ -48,12 +48,12 @@ Semua aktivitas penting user dicatat otomatis, termasuk:
 
 ### List Audit Logs (Admin only)
 ```bash
-curl "http://localhost:3000/api/v1/audit-logs?limit=100" \
+curl "http://localhost:3000/api/v1/audit-logs?limit=25" \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 Optional query params:
-- `limit` (default `100`, max `500`)
+- `limit` (default `25`, max `25`)
 - `user_id`
 - `username`
 - `action`
@@ -106,6 +106,19 @@ curl -X DELETE "http://localhost:3000/api/v1/devices" \
 ```bash
 curl "http://localhost:3000/api/v1/devices/olt-1/status" \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+### Check Device Connection (Before Save)
+```bash
+curl -X POST "http://localhost:3000/api/v1/devices/check-connection" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "base_url": "http://192.168.96.100",
+    "port": 80,
+    "username": "admin",
+    "password": "admin"
+  }'
 ```
 
 ---

@@ -80,6 +80,7 @@ func main() {
 			devices := protected.Group("/devices")
 			{
 				devices.POST("", handlers.CreateDevice(db, cfg))
+				devices.POST("/check-connection", handlers.CheckDeviceConnection(db, cfg))
 				devices.GET("", handlers.ListDevices(db, cfg))
 				devices.GET("/:id", handlers.GetDevice(db, cfg))
 				devices.PUT("/:id", handlers.UpdateDevice(db, cfg))
@@ -118,6 +119,7 @@ func main() {
 	fmt.Println("║    GET  /health                  - Health check           ║")
 	fmt.Println("║    POST /api/v1/auth/login       - Login user             ║")
 	fmt.Println("║    POST /api/v1/devices          - Add device             ║")
+	fmt.Println("║    POST /api/v1/devices/check-connection - Test OLT       ║")
 	fmt.Println("║    GET  /api/v1/devices          - List devices           ║")
 	fmt.Println("║    GET  /api/v1/audit-logs       - User activity logs     ║")
 	fmt.Println("║    GET  /api/v1/devices/:id/pons - Get PON list           ║")

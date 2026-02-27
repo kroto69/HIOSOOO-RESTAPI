@@ -27,6 +27,17 @@ export interface DeviceStatus {
   error?: string;
 }
 
+export interface DeviceConnectionCheck {
+  base_url: string;
+  host?: string;
+  port?: number;
+  reachable: boolean;
+  authenticated: boolean;
+  auth_checked: boolean;
+  checked_at: string;
+  error?: string;
+}
+
 export interface PonPort {
   pon_id: string;
   full_id: string;
