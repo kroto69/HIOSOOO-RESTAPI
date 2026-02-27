@@ -27,6 +27,11 @@ func CreateDevice(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 		}
 
 		// Return 200 OK because it could be an update
+		writeAuditLog(c, db, "device.saved", "device", device.ID, map[string]interface{}{
+			"name": device.Name,
+			"host": device.BaseURL,
+			"port": device.Port,
+		})
 		response.SuccessWithMessage(c, "Device saved successfully", device)
 	}
 }
@@ -87,6 +92,10 @@ func UpdateDevice(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "device.updated", "device", device.ID, map[string]interface{}{
+			"name":   device.Name,
+			"status": device.Status,
+		})
 		response.SuccessWithMessage(c, "Device updated successfully", device)
 	}
 }
@@ -106,6 +115,7 @@ func DeleteDevice(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "device.deleted", "device", id, nil)
 		response.SuccessWithMessage(c, "Device deleted successfully", nil)
 	}
 }
@@ -119,6 +129,7 @@ func DeleteAllDevices(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "device.deleted_all", "device", "", nil)
 		response.SuccessWithMessage(c, "All devices deleted successfully", nil)
 	}
 }
@@ -139,6 +150,10 @@ func CheckDeviceStatus(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		reachable, _ := status["reachable"].(bool)
+		writeAuditLog(c, db, "device.status.checked", "device", id, map[string]interface{}{
+			"reachable": reachable,
+		})
 		response.Success(c, status, id)
 	}
 }

@@ -37,6 +37,30 @@ curl -X POST "http://localhost:3000/api/v1/auth/change-password" \
 
 ---
 
+## Activity Audit Logs
+
+Semua aktivitas penting user dicatat otomatis, termasuk:
+- login sukses / gagal
+- reboot ONU
+- update nama ONU
+- perubahan password user
+- CRUD device
+
+### List Audit Logs (Admin only)
+```bash
+curl "http://localhost:3000/api/v1/audit-logs?limit=100" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+Optional query params:
+- `limit` (default `100`, max `500`)
+- `user_id`
+- `username`
+- `action`
+- `resource`
+
+---
+
 ## Device Management
 
 ### Create/Update Device

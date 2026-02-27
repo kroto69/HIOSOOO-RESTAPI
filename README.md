@@ -1,207 +1,224 @@
-# HIOSOO-DASBOR
+# HIOSOOO Dashboard
 
-HIOSO OLT management REST API with support for multiple devices.
+> OLT Dashboard & REST API untuk manajemen dan monitoring jaringan berbasis Go + React (Vite).
 
-## Dashboard Preview
+---
 
-<p align="center">
-  <img src="frontend/src/images/images1.jpg" alt="Dashboard Preview 1" width="49%" />
-  <img src="frontend/src/images/images2.jpg" alt="Dashboard Preview 2" width="49%" />
-</p>
-<p align="center">
-  <img src="frontend/src/images/images3.jpg" alt="Dashboard Preview 3" width="49%" />
-  <img src="frontend/src/images/images4.jpg" alt="Dashboard Preview 4" width="49%" />
-</p>
+## Prerequisites
 
-## Features
+Pastikan tools berikut sudah terinstall sebelum mulai:
 
-- 🚀 High-performance Go backend with Gin framework
-- 📊 Multi-device support 
-- 🔄 Concurrent scraping with worker pools
-- 💾 SQLite database (zero-config, single file)
-- 📦 Single binary deployment
-- 🔒 Basic authentication for OLT access
-- 🔐 JWT-based dashboard user authentication
-- 📝 Response caching with configurable TTL
+### GCC / Build Tools (wajib untuk SQLite)
 
-## Methode kerjanya :
-
-This API operates using a simple three-step process:
-
-1.  **Scraping**: Automatically fetches live data directly from the HIOSO OLT web interface.
-2.  **Parsing**: Converts the raw data (HTML/JS) from the OLT into a clean, structured **JSON** format.
-3.  **API Wrapper**: Wraps OLT functions (Reboot, Update Name, etc.) into a standard **REST API** for easy integration with other applications.
-
-
-## Install & Usage (Linux)
-
-### 1) Clone Repository
+Project ini menggunakan `go-sqlite3` yang membutuhkan CGO dan GCC:
 
 ```bash
-git clone https://github.com/kroto69/HIOSOO-DASBOR.git
-cd HIOSOO-DASBOR
+sudo apt install gcc build-essential -y   # Debian/Ubuntu
+sudo pacman -S base-devel                 # Arch
+sudo dnf install gcc make                 # Fedora
 ```
 
-### 2) Pilih Mode Menjalankan
+> ⚠️ Tanpa GCC, build akan gagal dengan error: `go-sqlite3 requires cgo to work`
 
-#### Mode A: Backend Saja
+### Ringkasan Versi Minimum
 
-Requirements:
-- Go (untuk build / run dari source)
+| Tool          | Versi Minimum |
+|---------------|---------------|
+| Go            | 1.21+         |
+| Node.js       | 18+           |
+| npm           | 9+            |
+| GCC           | any           |
 
-Jalankan cepat:
+---
+
+## Quick Start (Linux)
+
+### 1) Clone
+
 ```bash
-chmod +x scripts/install.sh
-./scripts/install.sh
-./olt-api
+git clone https://github.com/kroto69/HIOSOOO-DASBOR.git
+cd HIOSOOO-DASBOR
 ```
 
-Alternatif development mode:
-```bash
-go run ./cmd/server/main.go
-```
+### 2) Pilih cara jalanin
 
-Akses:
-- API backend: `http://localhost:3000`
+#### Opsi A (Rekomendasi): Backend + Frontend Sekaligus
 
-#### Mode B: All-in-One (Backend + Frontend Dashboard)
-
-Requirements:
-- Go
-- Node.js + npm
-
-Jalankan:
 ```bash
 chmod +x run.sh
 ./run.sh
 ```
 
-`run.sh` akan:
-- build backend bila binary belum ada / source berubah
-- install dependency frontend bila belum ada
-- menjalankan backend + frontend sekaligus
-
 Akses:
-- API backend: `http://localhost:3000`
-- Dashboard frontend: `http://localhost:5173`
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:3000`
 
-Stop service:
-- tekan `Ctrl+C`
+> Catatan: output `run.sh` menampilkan default `3000`, tapi port backend final tetap mengikuti `configs/config.yaml` atau env `SERVER_PORT`.
 
-### 3) Login Dashboard
+---
 
-Default awal (sesuai config saat ini):
-- Username: `admin`
-- Password: `admin`
-
-Disarankan langsung ganti password setelah login pertama.
-
-### Optional: Makefile
+#### Opsi B: Backend Saja
 
 ```bash
-make install
-make run
-make dev
+chmod +x scripts/install.sh
+CGO_ENABLED=1 ./scripts/install.sh
+./olt-api
 ```
 
-Note: workflow `Makefile` difokuskan untuk Linux.
+Akses:
+- Backend: `http://localhost:3000`
 
-## API Documentation
+---
 
+#### Opsi C: Frontend Saja (backend sudah jalan di device lain)
 
-Full API documentation is available in [API.md](API.md).
+```bash
+cp frontend/.env.example frontend/.env
+```
 
-## Configuration
+> Edit `frontend/.env` dulu sebelum lanjut — sesuaikan `VITE_API_BASE_URL` ke alamat backend kamu (lihat bagian **Sinkronkan URL** di bawah).
 
-Edit `configs/config.yaml` to customize settings:
+```bash
+npm --prefix frontend install
+npm --prefix frontend run dev -- --host 0.0.0.0 --port 5173
+```
+
+Akses:
+- Frontend: `http://localhost:5173`
+
+---
+
+## Konfigurasi
+
+### Ubah Port Backend
+
+Edit `configs/config.yaml`:
 
 ```yaml
 server:
-  port: 3000
   host: 0.0.0.0
-  read_timeout: 30s
-  write_timeout: 30s
-
-database:
-  path: ./olt-api.db
-
-cache:
-  enabled: true
-  ttl: 60s
-
-scraper:
-  timeout: 30s
-  max_workers: 200
-  retry_attempts: 3
-
-logging:
-  level: info
-  file: ./logs/app.log
-
-auth:
-  jwt_secret: ""         # use AUTH_JWT_SECRET in production
-  access_token_ttl: 12h
-  initial_username: admin
-  initial_password: ""   # if empty, random password is generated on first run
+  port: 3003
 ```
 
-Notes:
-- `POST /api/v1/auth/login` returns bearer token for dashboard/API access.
-- If `auth.initial_password` is empty and no user exists yet, backend creates admin user with random password and prints it in server logs.
+Lalu restart backend.
 
-## API Response Format
+Alternatif tanpa edit file:
 
-All responses follow this format:
-
-```json
-{
-  "success": true,
-  "message": "Optional message",
-  "data": {},
-  "device_id": "olt-001",
-  "timestamp": "2024-01-01T00:00:00Z"
-}
+```bash
+SERVER_PORT=3003 ./olt-api
 ```
 
-Error responses:
+### Ubah Port Frontend (Vite)
 
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "timestamp": "2024-01-01T00:00:00Z"
-}
+```bash
+npm --prefix frontend run dev -- --host 0.0.0.0 --port 5174
 ```
 
-
-## Project Structure
-
-```
-olt-api/
-├── cmd/server/main.go          # Application entry point
-├── frontend/                   # Vite React TypeScript dashboard
-│   └── src/images/             # Dashboard static assets (logo, preview)
-├── internal/
-│   ├── config/                 # Configuration loading
-│   ├── database/               # Database models and setup
-│   ├── handlers/               # HTTP handlers
-│   ├── middleware/             # Gin middleware
-│   ├── parser/                 # HTML/JS array parsing
-│   ├── scraper/                # HTTP client and worker pool
-│   └── service/                # Business logic
-├── pkg/response/               # Response helpers
-├── configs/config.yaml         # Configuration file
-├── scripts/                    # Installation scripts
-├── Makefile                    # Build commands
-└── README.md                   # This file
-```
-
-## License
-
-MIT
-
-
-
-This project was built by **[Kroto69]** with the assistance of AI technology.
+Akses:
+- Frontend: `http://localhost:5174`
 
 ---
+
+## Sinkronkan URL Frontend ke Backend
+
+> ⚠️ Langkah ini **wajib** dilakukan jika kamu mengubah port backend atau mengakses dari device lain.
+
+Edit `frontend/.env`:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+Jika dashboard diakses dari device lain (HP/laptop lain), ganti dengan IP server backend:
+
+```env
+VITE_API_BASE_URL=http://192.168.1.65:3000
+```
+
+Untuk mencari IP server kamu:
+
+```bash
+ip a | grep inet
+```
+
+---
+
+## Login Default
+
+| Username | Password |
+|----------|----------|
+| `admin`  | `admin`  |
+
+> ⚠️ **Segera ganti password setelah login pertama** untuk keamanan.
+
+---
+
+## Troubleshooting
+
+### `./run.sh` tidak bisa dijalankan
+
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+### `vite: not found`
+
+```bash
+npm --prefix frontend install
+```
+
+### `go-sqlite3 requires cgo to work`
+
+CGO tidak aktif atau GCC belum terinstall:
+
+```bash
+sudo apt install gcc build-essential -y
+CGO_ENABLED=1 ./scripts/install.sh
+```
+
+### `Bus error (core dumped)` saat jalanin frontend
+
+Biasanya karena versi Node.js terlalu lama atau node_modules korup:
+
+```bash
+rm -rf frontend/node_modules frontend/package-lock.json
+npm --prefix frontend install
+npm --prefix frontend run dev -- --host 0.0.0.0 --port 5173
+```
+
+Pastikan juga Node.js v18+:
+
+```bash
+node --version
+```
+
+### Frontend tidak bisa konek ke backend
+
+- Pastikan backend sudah jalan
+- Cek `frontend/.env` — `VITE_API_BASE_URL` harus sesuai dengan alamat & port backend
+- Jika akses dari device lain, gunakan IP server bukan `localhost`
+
+### `AUTH_JWT_SECRET not set`
+
+Warning ini normal saat development — backend akan otomatis generate secret sementara. Untuk production, set environment variable:
+
+```bash
+AUTH_JWT_SECRET=your_secret_key ./olt-api
+```
+
+---
+
+## API Docs
+
+Detail endpoint ada di [`API.md`](./API.md).
+
+---
+
+## Tech Stack
+
+| Layer    | Teknologi        |
+|----------|------------------|
+| Backend  | Go               |
+| Frontend | React + Vite     |
+| Database | SQLite (via CGO) |

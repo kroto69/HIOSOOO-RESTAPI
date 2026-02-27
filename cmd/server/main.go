@@ -65,6 +65,8 @@ func main() {
 		protected := v1.Group("")
 		protected.Use(middleware.AuthRequired(cfg.Auth.JWTSecret))
 		{
+			protected.GET("/audit-logs", handlers.ListAuditLogs(db, cfg))
+
 			authProtected := protected.Group("/auth")
 			{
 				authProtected.GET("/me", handlers.Me(db, cfg))
@@ -117,6 +119,7 @@ func main() {
 	fmt.Println("║    POST /api/v1/auth/login       - Login user             ║")
 	fmt.Println("║    POST /api/v1/devices          - Add device             ║")
 	fmt.Println("║    GET  /api/v1/devices          - List devices           ║")
+	fmt.Println("║    GET  /api/v1/audit-logs       - User activity logs     ║")
 	fmt.Println("║    GET  /api/v1/devices/:id/pons - Get PON list           ║")
 	fmt.Println("║    GET  /api/v1/devices/:id/pons/:pon/onus - Get ONUs     ║")
 	fmt.Println("╚═══════════════════════════════════════════════════════════╝")

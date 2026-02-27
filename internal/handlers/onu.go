@@ -160,6 +160,10 @@ func ONUAction(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "onu.action."+strings.ToLower(req.Action), "onu", onuID, map[string]interface{}{
+			"device_id": deviceID,
+			"action":    req.Action,
+		})
 		response.SuccessWithMessage(c, "Action '"+req.Action+"' performed successfully", map[string]string{
 			"device_id": deviceID,
 			"onu_id":    onuID,
@@ -200,6 +204,10 @@ func UpdateONU(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "onu.name.updated", "onu", onuID, map[string]interface{}{
+			"device_id": deviceID,
+			"name":      req.Name,
+		})
 		response.SuccessWithMessage(c, "ONU name updated successfully", map[string]string{
 			"device_id": deviceID,
 			"onu_id":    onuID,
@@ -234,6 +242,9 @@ func DeleteONU(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "onu.deleted", "onu", onuID, map[string]interface{}{
+			"device_id": deviceID,
+		})
 		response.SuccessWithMessage(c, "ONU deleted successfully", nil)
 	}
 }
@@ -255,6 +266,7 @@ func SaveConfig(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "device.config.saved", "device", id, nil)
 		response.SuccessWithMessage(c, "Configuration saved successfully", nil)
 	}
 }

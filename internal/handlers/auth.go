@@ -42,9 +42,31 @@ func Login(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 		authSvc := service.NewAuthService(db, cfg)
 		result, err := authSvc.Login(strings.TrimSpace(req.Username), req.Password)
 		if err != nil {
+			auditSvc := service.NewAuditService(db)
+			_ = auditSvc.Log(service.AuditLogEntry{
+				Username:  strings.TrimSpace(req.Username),
+				Role:      "guest",
+				Action:    "auth.login.failed",
+				Resource:  "auth",
+				Metadata:  map[string]interface{}{"reason": err.Error()},
+				IPAddress: c.ClientIP(),
+				UserAgent: c.GetHeader("User-Agent"),
+			})
 			response.Error(c, 401, err.Error())
 			return
 		}
+
+		auditSvc := service.NewAuditService(db)
+		_ = auditSvc.Log(service.AuditLogEntry{
+			UserID:     result.User.ID,
+			Username:   result.User.Username,
+			Role:       result.User.Role,
+			Action:     "auth.login.success",
+			Resource:   "auth",
+			ResourceID: strconv.FormatUint(uint64(result.User.ID), 10),
+			IPAddress:  c.ClientIP(),
+			UserAgent:  c.GetHeader("User-Agent"),
+		})
 
 		response.SuccessWithMessage(c, "Login successful", result)
 	}
@@ -103,6 +125,7 @@ func ChangePassword(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "auth.password.changed", "auth", strconv.FormatUint(uint64(userID), 10), nil)
 		response.SuccessWithMessage(c, "Password updated successfully", nil)
 	}
 }
@@ -147,6 +170,10 @@ func CreateUser(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "auth.user.created", "user", strconv.FormatUint(uint64(user.ID), 10), map[string]interface{}{
+			"username": user.Username,
+			"role":     user.Role,
+		})
 		response.Created(c, "User created successfully", user)
 	}
 }
@@ -178,6 +205,7 @@ func ResetUserPassword(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		writeAuditLog(c, db, "auth.user.password.reset", "user", strconv.FormatUint(idValue, 10), nil)
 		response.SuccessWithMessage(c, "Password updated successfully", nil)
 	}
 }

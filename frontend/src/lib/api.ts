@@ -1,6 +1,7 @@
 import axios from "axios";
 import type {
   ApiResponse,
+  AuditLog,
   AuthUser,
   Device,
   DeviceStatus,
@@ -131,6 +132,25 @@ export async function changePassword(
 export async function listUsers(): Promise<AuthUser[]> {
   const { data } = await api.get<ApiResponse<AuthUser[]>>("/api/v1/auth/users");
   return unwrap(data, "Failed to load users");
+}
+
+export async function listAuditLogs(params?: {
+  limit?: number;
+  userId?: number;
+  username?: string;
+  action?: string;
+  resource?: string;
+}): Promise<AuditLog[]> {
+  const query = new URLSearchParams();
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.userId) query.set("user_id", String(params.userId));
+  if (params?.username?.trim()) query.set("username", params.username.trim());
+  if (params?.action?.trim()) query.set("action", params.action.trim());
+  if (params?.resource?.trim()) query.set("resource", params.resource.trim());
+
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const { data } = await api.get<ApiResponse<AuditLog[]>>(`/api/v1/audit-logs${suffix}`);
+  return unwrap(data, "Failed to load audit logs");
 }
 
 export async function createUser(payload: {

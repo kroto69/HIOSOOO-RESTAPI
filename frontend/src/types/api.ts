@@ -115,3 +115,17 @@ export interface LoginResponse {
   expires_at: string;
   user: AuthUser;
 }
+
+export interface AuditLog {
+  id: number;
+  user_id: number;
+  username: string;
+  role: string;
+  action: string;
+  resource: string;
+  resource_id?: string;
+  metadata?: string;
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+}

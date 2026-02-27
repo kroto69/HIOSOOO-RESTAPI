@@ -25,6 +25,21 @@ type User struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+// AuditLog stores user activity history (login, reboot, update name, etc.)
+type AuditLog struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	UserID     uint      `gorm:"index" json:"user_id"`
+	Username   string    `gorm:"index;not null" json:"username"`
+	Role       string    `gorm:"index" json:"role"`
+	Action     string    `gorm:"index;not null" json:"action"`
+	Resource   string    `gorm:"index;not null" json:"resource"`
+	ResourceID string    `gorm:"index" json:"resource_id"`
+	Metadata   string    `gorm:"type:text" json:"metadata,omitempty"`
+	IPAddress  string    `gorm:"index" json:"ip_address,omitempty"`
+	UserAgent  string    `gorm:"type:text" json:"user_agent,omitempty"`
+	CreatedAt  time.Time `gorm:"index" json:"created_at"`
+}
+
 // DeviceRequest is used for creating/updating devices
 type DeviceRequest struct {
 	ID       string `json:"id" binding:"required"`

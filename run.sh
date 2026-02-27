@@ -57,7 +57,7 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-echo "Starting backend on http://localhost:3000"
+echo "Starting backend (port follows configs/config.yaml or SERVER_PORT env; default 3000)"
 "$BACKEND_BIN" &
 BACKEND_PID=$!
 

@@ -10,13 +10,14 @@ import {
   deleteDevice,
   displayHost,
   getApiErrorMessage,
+  listAuditLogs,
   listDevices,
   listUsers,
   normalizeBaseUrl,
   resetUserPassword,
   updateDevice,
 } from "@/lib/api";
-import type { AuthUser, Device } from "@/types/api";
+import type { AuditLog, AuthUser, Device } from "@/types/api";
 import ChangePasswordDialog from "@/components/ChangePasswordDialog";
 import DeviceFormDialog, { DeviceFormValues } from "@/components/DeviceFormDialog";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,26 @@ function generateDeviceId(name: string, existing: Device[]) {
   return id;
 }
 
+function formatAuditTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("id-ID", { hour12: false });
+}
+
+function summarizeAuditMetadata(metadata?: string) {
+  if (!metadata) return "-";
+  try {
+    const parsed = JSON.parse(metadata) as Record<string, unknown>;
+    const entries = Object.entries(parsed).slice(0, 3);
+    if (entries.length === 0) return "-";
+    return entries
+      .map(([key, value]) => `${key}: ${String(value)}`)
+      .join(" | ");
+  } catch {
+    return metadata;
+  }
+}
+
 export default function Settings() {
   const queryClient = useQueryClient();
   const { modelById, setModel, removeModel, autoRefreshEnabled } = useUiStore();
@@ -85,6 +106,19 @@ export default function Settings() {
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["auth-users"],
     queryFn: listUsers,
+    enabled: isAdmin,
+    refetchInterval: autoRefreshEnabled ? 30000 : false,
+  });
+  const [auditUsernameFilter, setAuditUsernameFilter] = useState("");
+  const [auditActionFilter, setAuditActionFilter] = useState("");
+  const { data: auditLogs = [], isLoading: auditLogsLoading } = useQuery({
+    queryKey: ["audit-logs", auditUsernameFilter, auditActionFilter],
+    queryFn: () =>
+      listAuditLogs({
+        limit: 25,
+        username: auditUsernameFilter || undefined,
+        action: auditActionFilter || undefined,
+      }),
     enabled: isAdmin,
     refetchInterval: autoRefreshEnabled ? 30000 : false,
   });
@@ -599,6 +633,138 @@ export default function Settings() {
                 </Table>
               </div>
             </>
+          )}
+        </Card>
+      )}
+
+      {isAdmin && (
+        <Card className="p-4 sm:p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Activity Logs
+            </h3>
+            <p className="text-sm text-slate-500">
+              Riwayat aktivitas user (login, reboot, update nama, dll).
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Menampilkan maksimal 25 log terbaru.
+            </p>
+          </div>
+
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <Input
+              value={auditUsernameFilter}
+              onChange={(event) => setAuditUsernameFilter(event.target.value)}
+              placeholder="Filter username"
+            />
+            <Input
+              value={auditActionFilter}
+              onChange={(event) => setAuditActionFilter(event.target.value)}
+              placeholder="Filter action (contoh: onu.action.reboot)"
+            />
+          </div>
+
+          {auditLogsLoading && (
+            <div className="text-sm text-slate-500">Loading activity logs...</div>
+          )}
+
+          {!auditLogsLoading && (
+            <div className="max-h-[30rem] overflow-y-auto pr-1">
+              <div className="space-y-3 lg:hidden">
+                {auditLogs.length === 0 && (
+                  <div className="rounded-2xl border border-slate-100 bg-white p-6 text-sm text-slate-500">
+                    Belum ada aktivitas tercatat.
+                  </div>
+                )}
+                {auditLogs.map((entry: AuditLog) => (
+                  <div
+                    key={entry.id}
+                    className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-slate-500">
+                        {formatAuditTime(entry.created_at)}
+                      </p>
+                      <Badge variant="info" className="font-mono text-[10px]">
+                        {entry.action}
+                      </Badge>
+                    </div>
+                    <p className="mt-2 text-sm font-semibold text-slate-900">
+                      {entry.username}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {entry.resource}
+                      {entry.resource_id ? ` • ${entry.resource_id}` : ""}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-600 break-all">
+                      {summarizeAuditMetadata(entry.metadata)}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      IP: {entry.ip_address || "-"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden lg:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Waktu</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Resource</TableHead>
+                      <TableHead>Detail</TableHead>
+                      <TableHead>IP</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auditLogs.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center text-slate-500"
+                        >
+                          Belum ada aktivitas tercatat.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {auditLogs.map((entry: AuditLog) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="whitespace-nowrap text-xs text-slate-600">
+                          {formatAuditTime(entry.created_at)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-semibold text-slate-900">
+                            {entry.username}
+                          </div>
+                          <div className="text-xs uppercase text-slate-400">
+                            {entry.role || "-"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="info" className="font-mono text-[10px]">
+                            {entry.action}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-700">
+                          {entry.resource}
+                          {entry.resource_id ? ` • ${entry.resource_id}` : ""}
+                        </TableCell>
+                        <TableCell className="max-w-[420px] text-xs text-slate-600">
+                          <div className="truncate">
+                            {summarizeAuditMetadata(entry.metadata)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-600">
+                          {entry.ip_address || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           )}
         </Card>
       )}
